@@ -14,6 +14,9 @@
   const videoContainer = document.getElementById('videoContainer');
   const levelTitleEl = document.getElementById('levelTitle');
   const hiddenLevel2Btn = document.getElementById('hiddenLevel2Btn');
+  const gameCard = document.getElementById('gameCard');
+  const musicVideo = document.getElementById('musicVideo');
+  const musicIframe = document.getElementById('musicIframe');
 
   function fitCanvas() {
     const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
@@ -33,6 +36,7 @@
   let score = 0;
   let best = Number(localStorage.getItem('tjump_best') || 0);
   let raf = null;
+  let obstacleSpeed = 1; // Скорость препятствий на 2 уровне
   
   // Состояние клавиш для плавного управления
   const keys = {
@@ -66,7 +70,21 @@
   function reset() {
     score = 0;
     scoreEl.textContent = score;
-    player.y = world.height * 0.4;
+    obstacleSpeed = 1; // Сбрасываем скорость препятствий
+    
+    // Устанавливаем правильную позицию в зависимости от уровня
+    if (currentLevel === 1) {
+      player.y = world.height * 0.4;
+    } else if (currentLevel === 2) {
+      player.y = world.height - 150;
+      player.w = 60;
+      player.h = 40;
+    } else if (currentLevel === 3) {
+      player.y = world.height - 150;
+      player.w = 30;
+      player.h = 30;
+    }
+    
     player.vy = 0;
     player.onGround = false;
     player.landedOnId = null;
@@ -81,11 +99,32 @@
     music.volume = 1;
     musicStarted = false;
     
-    // Скрыть видео фона
-    if (currentLevel !== 2) {
+    // Управление медиа в зависимости от уровня
+    if (currentLevel === 1) {
+      // 1 уровень - iframe и фон без видео
       videoContainer.style.display = 'none';
       backgroundVideo.pause();
-      backgroundVideo.muted = true; // Отключаем звук при сбросе
+      backgroundVideo.muted = true;
+      musicIframe.style.display = 'block';
+      musicVideo.style.display = 'none';
+      musicVideo.pause();
+      musicVideo.muted = true;
+    } else if (currentLevel === 2) {
+      // 2 уровень - видео вместо iframe
+      videoContainer.style.display = 'block';
+      backgroundVideo.muted = false;
+      musicIframe.style.display = 'none';
+      musicVideo.style.display = 'block';
+      musicVideo.muted = false;
+    } else {
+      // 3 уровень - iframe
+      videoContainer.style.display = 'none';
+      backgroundVideo.pause();
+      backgroundVideo.muted = true;
+      musicIframe.style.display = 'block';
+      musicVideo.style.display = 'none';
+      musicVideo.pause();
+      musicVideo.muted = true;
     }
     
     // Обновить интерфейс в зависимости от уровня
@@ -106,9 +145,9 @@
       controlsEl.textContent = 'Управление: Пробел / клик / тап — прыжок.';
       instructionsEl.textContent = 'Нажмите «Старт», затем включите трек в плеере справа (обложка видна).';
     } else if (currentLevel === 2) {
-      levelTitleEl.textContent = 'Уровень 2 - Езда на машине';
+      levelTitleEl.textContent = 'Уровень 2 - Быстрая езда';
       controlsEl.textContent = 'Управление: W/A/S/D или стрелки — движение во всех направлениях.';
-      instructionsEl.textContent = 'Объезжайте машины! За каждую машину мимо которой проедете получите 1 очко.';
+      instructionsEl.textContent = 'Уклоняйтесь от препятствий! За каждое уклонение получите 1 очко.';
     } else if (currentLevel === 3) {
       levelTitleEl.textContent = 'Уровень 3 - Новый геймплей';
       controlsEl.textContent = 'Управление: W/A/S/D — движение.';
@@ -148,29 +187,36 @@
     }
   }
 
-  // УРОВЕНЬ 2: Езда на машине
+  // УРОВЕНЬ 2: Быстрая езда на машине
   function spawnInitialCars() {
-    // Создаем начальные машины
-    for (let i = 0; i < 5; i++) {
-      spawnCar(world.width + i * 200);
+    // Создаем начальные препятствия-машины
+    for (let i = 0; i < 3; i++) {
+      spawnObstacleCar(world.width + i * 300);
     }
   }
 
-  function spawnCar(x) {
-    // Спавним машины по всей высоте контейнера
+  function spawnObstacleCar(x) {
+    // Спавним препятствия-машины по всей высоте экрана
     const y = 50 + Math.random() * (world.height - 100); // От 50 до высота-50
     const id = Math.random().toString(36).slice(2);
-    return { id, x, y, w: 60, h: 40, scored: false };
+    return { 
+      id, 
+      x, 
+      y, 
+      w: 50, 
+      h: 80, 
+      scored: false
+    };
   }
 
   function ensureCarSpawn() {
     if (cars.length === 0) {
-      cars.push(spawnCar(world.width + 100));
+      cars.push(spawnObstacleCar(world.width + 100));
       return;
     }
     const last = cars[cars.length - 1];
-    if (last.x < world.width + 150) {
-      cars.push(spawnCar(world.width + Math.random() * 200 + 100));
+    if (last.x < world.width + 200) {
+      cars.push(spawnObstacleCar(world.width + Math.random() * 300 + 200));
     }
   }
 
@@ -231,7 +277,7 @@
           scoreEl.textContent = score;
         }
       }
-    } z
+    }
 
     platforms = platforms.filter(p => p.x + p.barW/2 > -60);
     ensureSpawn();
@@ -258,8 +304,8 @@
   }
 
   function updateLevel2() {
-    // Движение машин
-    cars.forEach(car => car.x -= world.scrollSpeed * 1.5);
+    // Движение препятствий с одинаковой скоростью
+    cars.forEach(car => car.x -= obstacleSpeed);
     
     // Проверка столкновений
     for (const car of cars) {
@@ -268,18 +314,24 @@
         return;
       }
       
-      // Подсчет очков за проезд мимо
+      // Подсчет очков за уклонение от препятствий
       if (!car.scored && car.x + car.w < player.x) {
         car.scored = true;
-        score += 1;
+        score += 1; // 1 очко за препятствие
         scoreEl.textContent = score;
+        
+        // Увеличиваем скорость с каждым пройденным препятствием
+        obstacleSpeed += 0.1;
       }
     }
 
+    // Удаляем препятствия, которые ушли за экран
     cars = cars.filter(car => car.x + car.w > -60);
+    
+    // Спавним новые препятствия
     ensureCarSpawn();
 
-    if (score >= 300 && !gameWon) {
+    if (score >= 50 && !gameWon) {
       gameWon = true;
       winLevel2();
     }
@@ -329,7 +381,7 @@
       const swing = Math.sin(t) * 4 * (player.onGround ? 0.4 : 1);
       g.beginPath(); g.moveTo(x + w/2, y + 30); g.lineTo(x + 6, y + 36 + swing); g.moveTo(x + w/2, y + 30); g.lineTo(x + w - 6, y + 36 - swing); g.stroke();
     } else if (currentLevel === 2) {
-      // Машина для 2 уровня
+      // Машина игрока для 2 уровня
       if (carImg && carImg.complete) {
         g.drawImage(carImg, x, y, w, h);
       } else {
@@ -339,10 +391,10 @@
         g.fillRect(x + 5, y + 5, w - 10, h - 10);
       }
       
-      // Добавляем фотографию сверху машины
+      // Добавляем фотографию водителя
       if (faceImg && faceImg.complete) {
-        g.globalAlpha = 0.8;
-        g.drawImage(faceImg, x + w/2 - 20, y - 25, 40, 40);
+        g.globalAlpha = 0.9;
+        g.drawImage(faceImg, x + w/2 - 15, y + 5, 30, 30);
         g.globalAlpha = 1;
       }
     } else if (currentLevel === 3) {
@@ -377,10 +429,24 @@
 
   function drawCar(car) {
     const g = ctx;
-    g.fillStyle = '#ff4757';
+    // Рисуем препятствие-машину
+    g.fillStyle = '#2c3e50';
     g.fillRect(car.x, car.y, car.w, car.h);
-    g.fillStyle = '#fff';
-    g.fillRect(car.x + 5, car.y + 5, car.w - 10, car.h - 10);
+    
+    // Окна машины
+    g.fillStyle = '#34495e';
+    g.fillRect(car.x + 5, car.y + 10, car.w - 10, 20);
+    g.fillRect(car.x + 5, car.y + 40, car.w - 10, 20);
+    
+    // Фары
+    g.fillStyle = '#f39c12';
+    g.fillRect(car.x + 2, car.y + 5, 6, 4);
+    g.fillRect(car.x + car.w - 8, car.y + 5, 6, 4);
+    
+    // Задние фонари
+    g.fillStyle = '#e74c3c';
+    g.fillRect(car.x + 2, car.y + car.h - 9, 6, 4);
+    g.fillRect(car.x + car.w - 8, car.y + car.h - 9, 6, 4);
   }
 
   function drawObstacle(obs) {
@@ -438,29 +504,41 @@
   }
 
   function moveLeft() {
-    if (currentLevel === 2 || currentLevel === 3) {
-      const speed = currentLevel === 2 ? 8 : 20; // Более плавное движение на 2 уровне
+    if (currentLevel === 2) {
+      // Плавное движение влево
+      player.x = Math.max(50, player.x - 5);
+    } else if (currentLevel === 3) {
+      const speed = 20;
       player.x = Math.max(50, player.x - speed);
     }
   }
 
   function moveRight() {
-    if (currentLevel === 2 || currentLevel === 3) {
-      const speed = currentLevel === 2 ? 8 : 20; // Более плавное движение на 2 уровне
+    if (currentLevel === 2) {
+      // Плавное движение вправо
+      player.x = Math.min(world.width - player.w - 50, player.x + 5);
+    } else if (currentLevel === 3) {
+      const speed = 20;
       player.x = Math.min(world.width - player.w - 50, player.x + speed);
     }
   }
 
   function moveUp() {
-    if (currentLevel === 2 || currentLevel === 3) {
-      const speed = currentLevel === 2 ? 8 : 20; // Более плавное движение на 2 уровне
+    if (currentLevel === 2) {
+      // Плавное движение вверх
+      player.y = Math.max(50, player.y - 5);
+    } else if (currentLevel === 3) {
+      const speed = 20;
       player.y = Math.max(50, player.y - speed);
     }
   }
 
   function moveDown() {
-    if (currentLevel === 2 || currentLevel === 3) {
-      const speed = currentLevel === 2 ? 8 : 20; // Более плавное движение на 2 уровне
+    if (currentLevel === 2) {
+      // Плавное движение вниз
+      player.y = Math.min(world.height - player.h - 50, player.y + 5);
+    } else if (currentLevel === 3) {
+      const speed = 20;
       player.y = Math.min(world.height - player.h - 50, player.y + speed);
     }
   }
@@ -490,8 +568,12 @@
   function winLevel2() {
     cancelAnimationFrame(raf);
     world.running = false;
+    
+    // Скрываем видео
     videoContainer.style.display = 'none';
     backgroundVideo.pause();
+    musicVideo.pause();
+    
     statusEl.textContent = 'Уровень 2 пройден! Переходим на 3 уровень?';
     overlay.hidden = false;
     overlay.classList.remove('btn_transtperent');
@@ -524,13 +606,20 @@
   function startLevel2() {
     currentLevel = 2;
     player.x = 160;
-    player.y = world.height - 150; // Позиция для машины
-    player.w = 60;
-    player.h = 40;
-    videoContainer.style.display = 'block';
-    backgroundVideo.muted = false; // Включаем звук
-    backgroundVideo.play();
-    start();
+    
+    // Используем reset для правильной инициализации
+    reset();
+    
+    // Запускаем видео
+    backgroundVideo.play().catch(e => console.log('Video play error:', e));
+    musicVideo.play().catch(e => console.log('Music video play error:', e));
+    
+    // Запуск игры
+    overlay.hidden = true;
+    world.running = true;
+    cancelAnimationFrame(raf);
+    overlay.classList.add('btn_transtperent');
+    loop();
   }
 
   function startLevel3() {

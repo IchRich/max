@@ -120,3 +120,21 @@
     {
         display: none;
     }
+
+    .btn + .btn {
+        margin-left: 8px;
+    }
+
+    #level2Btn, #level3Btn {
+        background: linear-gradient(180deg, rgba(157,124,255,0.2), rgba(157,124,255,0.05));
+        border: 1px solid rgba(157,124,255,0.55);
+        box-shadow: 0 6px 22px rgba(157,124,255,0.25);
+    }
+
+    #videoContainer {
+        pointer-events: none;
+    }
+
+    #videoContainer video {
+        pointer-events: none;
+    }
