@@ -237,17 +237,17 @@
     ensureSpawn();
 
     // Эффекты по очкам
-    if (score >= 13 && !musicStarted) {
+    if (score >= 130 && !musicStarted) {
       crazyMode = true;
       music.play();
       musicStarted = true;
     }
-    if (score >= 15 && !stopRotation) {
+    if (score >= 150 && !stopRotation) {
       stopRotation = true;
       crazyMode = false;
       music.volume = 0.4;
     }
-    if (score >= 20 && !gameWon) {
+    if (score >= 200 && !gameWon) {
       gameWon = true;
       winLevel1();
     }
