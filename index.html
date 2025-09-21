@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Максим с днем рождения</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="wrap">
+    <!-- GAME COLUMN -->
+    <div class="card">
+      <div class="game-header">
+        <div class="title">Прыжки по пенисам</div>
+        <div class="hud">
+          <div class="badge">Очки: <span id="score">0</span></div>
+          <div class="badge">Рекорд: <span id="best">0</span></div>
+        </div>
+      </div>
+      <div class="game-area">
+        <canvas id="game"></canvas>
+        <div id="overlay" class="overlay">
+          <div class="panel">
+            <h2 id="status">Пауза</h2>
+            <p>Управление: <span class="kbd">Пробел</span> / клик / тап — прыжок.</p>
+            <p>Нажмите «Старт», затем включите трек в плеере справа (обложка видна).</p>
+            <button id="startBtn" class="btn">Старт</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIDE COLUMN: MUSIC + TIPS -->
+    <aside class="side">
+      <div class="card">
+        <iframe frameborder="0" allow="clipboard-write" style="border:none;width:100%;height:244px;" width="100%" height="244" class="player-embed"
+          src="https://music.yandex.ru/iframe/album/37619678/track/141459982"></iframe>
+      </div>
+      <div class="card tips">
+        <div class="game-header" style="border-bottom: 0; background: none; padding: 8px 12px;">
+          <div class="title" style="font-size:14px;">Подсказки</div>
+        </div>
+        <div style="padding: 0 12px 12px;">
+          <ul>
+            <li>Прыгай заранее — зацепись за нижнюю планку «┴».</li>
+            <li>Очки дают за успешные приземления на новые платформы.</li>
+            <li>На телефоне используй тап по экрану.</li>
+          </ul>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
